@@ -6,8 +6,9 @@ import SparklesIcon from './icons/SparklesIcon';
 import XIcon from './icons/XIcon';
 import BrainCircuitIcon from './icons/BrainCircuitIcon';
 import HomeIcon from './icons/HomeIcon';
+import CalendarIcon from './icons/CalendarIcon';
 
-type Page = 'home' | 'dashboard' | 'projects' | 'tasks' | 'decompose';
+type Page = 'home' | 'dashboard' | 'projects' | 'tasks' | 'decompose' | 'calendar';
 
 interface SidebarProps {
   currentPage: Page;
@@ -79,6 +80,12 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, onNavigate, isOpen, onCl
             label="Today's Tasks"
             isActive={currentPage === 'tasks'}
             onClick={() => onNavigate('tasks')}
+          />
+           <NavItem
+            icon={<CalendarIcon className="w-5 h-5" />}
+            label="Calendar"
+            isActive={currentPage === 'calendar'}
+            onClick={() => onNavigate('calendar')}
           />
            <NavItem
             icon={<SparklesIcon className="w-5 h-5" />}

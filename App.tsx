@@ -7,6 +7,7 @@ import ProjectsPage from './pages/ProjectsPage';
 import TasksPage from './pages/TasksPage';
 import DecomposePage from './pages/DecomposePage';
 import HomePage from './pages/HomePage'; // Import the new Home Page
+import CalendarPage from './pages/CalendarPage'; // Import the new Calendar Page
 import TaskDetailModal from './components/TaskDetailModal';
 import JugglingMeterDetailModal from './components/JugglingMeterDetailModal';
 import PauseSuggestionModal from './components/PauseSuggestionModal';
@@ -28,7 +29,7 @@ const initialTasks: Task[] = [
 ];
 // --- END MOCK DATA ---
 
-type Page = 'home' | 'dashboard' | 'projects' | 'tasks' | 'decompose';
+type Page = 'home' | 'dashboard' | 'projects' | 'tasks' | 'decompose' | 'calendar';
 type TemplateTask = { subtask: string; effort_score: number };
 type PauseSuggestion = { project: Project, effortReduction: number };
 
@@ -181,7 +182,7 @@ const App: React.FC = () => {
   const renderPage = () => {
     switch(currentPage) {
         case 'home':
-            return <HomePage onDecomposeGoal={handleDecomposeFromHome} onNavigate={handleNavigate} />;
+            return <HomePage onDecomposeGoal={handleDecomposeFromHome} onNavigate={handleNavigate} onToggleSidebar={toggleSidebar} />;
         case 'dashboard':
             return <DashboardPage 
                         projects={projects}
@@ -209,21 +210,26 @@ const App: React.FC = () => {
                         initialGoal={goalForDecomposition}
                         onProcessingComplete={clearDecompositionInputs}
                     />;
+        case 'calendar':
+            return <CalendarPage
+                        tasks={tasks}
+                        projects={projects}
+                        onSelectTask={handleSelectTask}
+                        onToggleSidebar={toggleSidebar}
+                    />;
         default:
-             return <HomePage onDecomposeGoal={handleDecomposeFromHome} onNavigate={handleNavigate} />;
+             return <HomePage onDecomposeGoal={handleDecomposeFromHome} onNavigate={handleNavigate} onToggleSidebar={toggleSidebar} />;
     }
   }
 
   return (
     <div className="flex min-h-screen bg-dark-bg">
-        {currentPage !== 'home' && (
-             <Sidebar 
-                currentPage={currentPage} 
-                onNavigate={handleNavigate} 
-                isOpen={isSidebarOpen}
-                onClose={closeSidebar}
-            />
-        )}
+        <Sidebar 
+            currentPage={currentPage} 
+            onNavigate={handleNavigate} 
+            isOpen={isSidebarOpen}
+            onClose={closeSidebar}
+        />
         <main className="flex-1 min-w-0">
              {renderPage()}
         </main>

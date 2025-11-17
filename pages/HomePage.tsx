@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
 import BrainCircuitIcon from '../components/icons/BrainCircuitIcon';
 import ListChecksIcon from '../components/icons/ListChecksIcon';
+import MenuIcon from '../components/icons/MenuIcon';
+import CalendarIcon from '../components/icons/CalendarIcon';
 
 interface HomePageProps {
   onDecomposeGoal: (goal: string) => void;
-  onNavigate: (page: 'tasks') => void;
+  onNavigate: (page: 'tasks' | 'calendar') => void;
+  onToggleSidebar: () => void;
 }
 
-const HomePage: React.FC<HomePageProps> = ({ onDecomposeGoal, onNavigate }) => {
+const HomePage: React.FC<HomePageProps> = ({ onDecomposeGoal, onNavigate, onToggleSidebar }) => {
   const [goal, setGoal] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -19,6 +22,10 @@ const HomePage: React.FC<HomePageProps> = ({ onDecomposeGoal, onNavigate }) => {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen text-center p-4">
+       <button onClick={onToggleSidebar} className="absolute top-4 left-4 p-2 text-dark-text-secondary rounded-full hover:bg-dark-surface md:hidden">
+        <MenuIcon className="w-6 h-6" />
+      </button>
+
       <div className="flex items-center gap-4 mb-6">
         <BrainCircuitIcon className="w-16 h-16 text-brand-primary" />
         <h1 className="text-6xl font-bold text-dark-text-primary tracking-tighter">juggler.io</h1>
@@ -44,13 +51,22 @@ const HomePage: React.FC<HomePageProps> = ({ onDecomposeGoal, onNavigate }) => {
         </div>
       </form>
 
-      <button 
-        onClick={() => onNavigate('tasks')}
-        className="flex items-center gap-2 bg-dark-surface hover:bg-slate-800 text-dark-text-primary font-bold py-2 px-6 rounded-lg transition-colors border border-slate-700"
-      >
-        <ListChecksIcon className="w-5 h-5" />
-        <span>View Today's Tasks</span>
-      </button>
+      <div className="flex items-center gap-4">
+        <button 
+          onClick={() => onNavigate('tasks')}
+          className="flex items-center gap-2 bg-dark-surface hover:bg-slate-800 text-dark-text-primary font-bold py-2 px-6 rounded-lg transition-colors border border-slate-700"
+        >
+          <ListChecksIcon className="w-5 h-5" />
+          <span>View Today's Tasks</span>
+        </button>
+        <button 
+          onClick={() => onNavigate('calendar')}
+          className="flex items-center gap-2 bg-dark-surface hover:bg-slate-800 text-dark-text-primary font-bold py-2 px-6 rounded-lg transition-colors border border-slate-700"
+        >
+          <CalendarIcon className="w-5 h-5" />
+          <span>Open Calendar</span>
+        </button>
+      </div>
     </div>
   );
 };
