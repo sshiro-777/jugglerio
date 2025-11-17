@@ -133,6 +133,23 @@ const App: React.FC = () => {
     setTasks(currentTasks => currentTasks.filter(t => t.task_id !== taskId));
   };
   
+  const handleUpdateTask = (updatedTask: Task) => {
+    const availableEnergy = 7; // Stable baseline
+    const project = projectMap.get(updatedTask.project_id);
+
+    let finalTask = { ...updatedTask };
+    if (project) {
+        const newFlowRating = calculateFlowRating(updatedTask, project, availableEnergy);
+        finalTask.flow_rating = newFlowRating;
+    }
+    
+    setTasks(currentTasks =>
+        currentTasks.map(t => (t.task_id === finalTask.task_id ? finalTask : t))
+    );
+
+    setSelectedTask(finalTask); // Update the modal's view immediately
+  };
+
   const handleIgnoreSuggestionForToday = () => {
       setIgnoreSuggestionToday(true);
       setPauseSuggestion(null);
@@ -241,6 +258,7 @@ const App: React.FC = () => {
                 activeTimer={activeTimer}
                 onStartTimer={handleStartTimer}
                 onStopTimer={handleStopTimer}
+                onUpdateTask={handleUpdateTask}
             />
         )}
         {isJugglingMeterModalOpen && (

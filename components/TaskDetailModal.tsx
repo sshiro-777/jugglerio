@@ -7,6 +7,9 @@ import SparklesIcon from './icons/SparklesIcon';
 import { generateTaskDraft } from '../services/geminiService';
 import PlayIcon from './icons/PlayIcon';
 import StopIcon from './icons/StopIcon';
+import PencilIcon from './icons/PencilIcon';
+import SaveIcon from './icons/SaveIcon';
+import XIcon from './icons/XIcon';
 
 
 interface TaskDetailModalProps {
@@ -16,6 +19,7 @@ interface TaskDetailModalProps {
   activeTimer: { taskId: string; startTime: number } | null;
   onStartTimer: (taskId: string) => void;
   onStopTimer: () => void;
+  onUpdateTask: (updatedTask: Task) => void;
 }
 
 const TimerDisplay: React.FC<{ startTime: number }> = ({ startTime }) => {
@@ -40,10 +44,19 @@ const TimerDisplay: React.FC<{ startTime: number }> = ({ startTime }) => {
 };
 
 
-const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, project, onClose, activeTimer, onStartTimer, onStopTimer }) => {
+const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, project, onClose, activeTimer, onStartTimer, onStopTimer, onUpdateTask }) => {
   const [isGeneratingDraft, setIsGeneratingDraft] = useState(false);
   const [draftContent, setDraftContent] = useState<string | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedTask, setEditedTask] = useState<Task>(task);
   
+  useEffect(() => {
+      setEditedTask(task);
+      if (task.task_id !== editedTask.task_id) {
+          setIsEditing(false);
+      }
+  }, [task, editedTask.task_id]);
+
   if (!task) return null;
   
   const isCurrentTaskTiming = activeTimer?.taskId === task.task_id;
@@ -103,6 +116,29 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, project, onClos
     }
   };
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setEditedTask(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleEffortChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let numericValue = Number(e.target.value);
+    if (numericValue < 1) numericValue = 1;
+    if (numericValue > 10) numericValue = 10;
+    setEditedTask(prev => ({ ...prev, effort_score: numericValue }));
+  };
+
+  const handleSave = () => {
+      onUpdateTask(editedTask);
+      setIsEditing(false);
+  };
+
+  const handleCancel = () => {
+      setEditedTask(task);
+      setIsEditing(false);
+  };
+
+
   const IntegrationButton: React.FC<{ icon: React.ReactNode; label: string; href: string; }> = ({ icon, label, href }) => (
     <a 
         href={href}
@@ -125,8 +161,17 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, project, onClos
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex justify-between items-start mb-4">
-            <div>
-                 <h2 className="text-2xl font-bold text-dark-text-primary">{task.description}</h2>
+            <div className="flex-1 pr-4">
+                 {isEditing ? (
+                     <textarea
+                         name="description"
+                         value={editedTask.description}
+                         onChange={handleInputChange}
+                         className="w-full bg-dark-bg border border-slate-700 rounded-lg px-3 py-2 text-2xl font-bold text-dark-text-primary focus:ring-brand-secondary focus:border-brand-secondary"
+                     />
+                 ) : (
+                    <h2 className="text-2xl font-bold text-dark-text-primary">{task.description}</h2>
+                 )}
                  <div className="flex items-center gap-4 text-sm text-dark-text-secondary mt-2">
                      <div className="flex items-center gap-1.5">
                        <TargetIcon className="w-4 h-4" />
@@ -135,7 +180,20 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, project, onClos
                       <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${getProjectDnaColor(project?.project_dna)}`}>{project?.project_dna}</span>
                   </div>
             </div>
-            <button onClick={onClose} className="text-dark-text-secondary hover:text-dark-text-primary text-2xl">&times;</button>
+            <div className="flex items-center gap-2">
+                {!isEditing ? (
+                    <button onClick={() => setIsEditing(true)} className="p-2 text-dark-text-secondary hover:text-dark-text-primary rounded-full hover:bg-dark-bg" title="Edit Task">
+                        <PencilIcon className="w-5 h-5" />
+                    </button>
+                ) : (
+                    <button onClick={handleSave} className="p-2 text-brand-primary hover:text-opacity-80 rounded-full hover:bg-dark-bg" title="Save Changes">
+                        <SaveIcon className="w-5 h-5" />
+                    </button>
+                )}
+                <button onClick={isEditing ? handleCancel : onClose} className="p-1 text-dark-text-secondary hover:text-dark-text-primary rounded-full hover:bg-dark-bg" title={isEditing ? "Cancel" : "Close"}>
+                    <XIcon className="w-6 h-6" />
+                </button>
+            </div>
         </div>
         
         <div className="mt-8">
@@ -170,12 +228,40 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, project, onClos
             </div>
             <div className="text-center bg-dark-bg p-4 rounded-lg">
                 <p className="text-sm text-dark-text-secondary">Effort Score</p>
-                <p className="text-4xl font-bold text-dark-text-primary">{task.effort_score}</p>
+                {isEditing ? (
+                    <input
+                        type="number"
+                        min="1"
+                        max="10"
+                        name="effort_score"
+                        value={editedTask.effort_score}
+                        onChange={handleEffortChange}
+                        className="w-24 bg-dark-surface border border-slate-600 rounded-lg p-2 text-4xl font-bold text-dark-text-primary focus:ring-brand-secondary focus:border-brand-secondary text-center"
+                    />
+                ) : (
+                    <p className="text-4xl font-bold text-dark-text-primary">{task.effort_score}</p>
+                )}
             </div>
              <div className="text-center bg-dark-bg p-4 rounded-lg">
                 <p className="text-sm text-dark-text-secondary">Deadline</p>
-                <p className={`text-xl font-semibold ${deadlineInfo.color}`}>{deadlineInfo.text}</p>
-                <p className="text-xs text-dark-text-secondary">{new Date(task.deadline).toLocaleDateString()}</p>
+                {isEditing ? (
+                    <input
+                        type="date"
+                        name="deadline"
+                        value={new Date(editedTask.deadline).toISOString().split('T')[0]}
+                        onChange={(e) => {
+                            const newDate = new Date(e.target.value);
+                            newDate.setUTCHours(12);
+                            setEditedTask(prev => ({ ...prev, deadline: newDate.toISOString() }));
+                        }}
+                        className="w-full bg-dark-surface border border-slate-600 rounded-lg p-1.5 text-xl font-semibold text-dark-text-primary focus:ring-brand-secondary focus:border-brand-secondary text-center"
+                    />
+                ) : (
+                    <>
+                        <p className={`text-xl font-semibold ${deadlineInfo.color}`}>{deadlineInfo.text}</p>
+                        <p className="text-xs text-dark-text-secondary">{new Date(task.deadline).toLocaleDateString()}</p>
+                    </>
+                )}
             </div>
              <div className="text-center bg-dark-bg p-4 rounded-lg">
                 <p className="text-sm text-dark-text-secondary">Project Impact</p>
