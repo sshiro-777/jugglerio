@@ -32,59 +32,85 @@ const meterConfig = {
 
 const JugglingMeter: React.FC<JugglingMeterProps> = ({ status, effortLoad, onOpenModal }) => {
   const config = meterConfig[status];
+  // Ensure percentage doesn't exceed 100, but allow effortLoad to display its real value
   const percentage = Math.min(100, (effortLoad / MAX_EFFORT_LOAD) * 100);
-  
-  const circumference = 2 * Math.PI * 52; // 2 * pi * radius
+
+  // SVG Gauge constants
+  const angle = 180; // Semi-circle
+  const strokeWidth = 12;
+  const radius = 70;
+  const cx = 90;
+  const cy = 90;
+  const circumference = Math.PI * radius; // Circumference of a semi-circle
+
   const strokeDashoffset = circumference - (percentage / 100) * circumference;
+
+  const needleRotation = (percentage / 100) * angle - 90; // -90 to start from the left
+
+  // Path for the arc
+  const arc = `M ${cx - radius},${cy} a ${radius},${radius} 0 0 1 ${radius * 2},0`;
 
   return (
     <button 
       onClick={onOpenModal}
-      className="w-full p-6 bg-dark-surface rounded-2xl shadow-lg flex flex-col items-center gap-6 hover:bg-slate-800 transition-colors"
+      className="w-full p-6 bg-dark-surface rounded-2xl shadow-lg flex flex-col items-center gap-4 hover:bg-slate-800 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-secondary"
+      aria-label={`Juggling Meter. Current status: ${config.label}. Effort load: ${effortLoad}. Click for details.`}
     >
-      <div className="flex flex-col sm:flex-row items-center gap-6 w-full">
-        <div className="relative w-40 h-40 flex-shrink-0">
-          <svg className="w-full h-full" viewBox="0 0 120 120">
-            <circle
-              className="text-dark-bg"
-              strokeWidth="10"
-              stroke="currentColor"
-              fill="transparent"
-              r="52"
-              cx="60"
-              cy="60"
-            />
-            <circle
-              strokeWidth="10"
-              strokeDasharray={circumference}
-              strokeDashoffset={strokeDashoffset}
-              strokeLinecap="round"
-              stroke={config.color}
-              fill="transparent"
-              r="52"
-              cx="60"
-              cy="60"
-              className="transform -rotate-90 origin-center transition-all duration-500"
-            />
-          </svg>
-          <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className={`text-3xl font-bold ${config.textColor}`}>
+      <div className="w-full flex flex-col items-center">
+         <h2 className="text-xl font-bold text-dark-text-primary">Juggling Meter</h2>
+         <span className={`mt-1 text-lg font-semibold rounded-full ${config.textColor}`}>
+            {config.label}
+         </span>
+      </div>
+      
+      <div className="relative w-[180px] h-[90px] overflow-hidden mt-2">
+        <svg className="w-full h-full" viewBox="0 0 180 90">
+          {/* Background Arc */}
+          <path
+            d={arc}
+            strokeWidth={strokeWidth}
+            stroke="#0A192F" // dark-bg
+            fill="none"
+          />
+          {/* Foreground Arc */}
+           <path
+            d={arc}
+            strokeWidth={strokeWidth}
+            stroke={config.color}
+            fill="none"
+            strokeLinecap="round"
+            strokeDasharray={circumference}
+            strokeDashoffset={strokeDashoffset}
+            className="transition-all duration-500 ease-in-out"
+          />
+           {/* Needle */}
+           <g transform={`rotate(${needleRotation} ${cx} ${cy})`} style={{ transition: 'transform 0.5s ease-in-out' }}>
+              <line 
+                x1={cx}
+                y1={cy}
+                x2={cx - radius + strokeWidth/2}
+                y2={cy}
+                stroke="#E6F1FF" // dark-text-primary
+                strokeWidth="2"
+              />
+              <circle cx={cx} cy={cy} r="4" fill="#E6F1FF" />
+           </g>
+        </svg>
+        <div className="absolute bottom-0 left-0 right-0 flex flex-col items-center justify-center">
+            <span className={`text-4xl font-bold ${config.textColor}`}>
               {effortLoad}
             </span>
-            <span className="text-sm text-dark-text-secondary">Effort Load</span>
-          </div>
-        </div>
-        <div className="text-center sm:text-left">
-          <h2 className="text-xl font-bold text-dark-text-primary">Juggling Meter</h2>
-           <span className={`mt-1 text-lg font-semibold rounded-full ${config.textColor}`}>
-            {config.label}
-          </span>
-          <p className="text-dark-text-secondary mt-2 text-sm">Click to see which tasks are contributing most to your load.</p>
+            <span className="text-sm text-dark-text-secondary -mt-1">Effort Load</span>
         </div>
       </div>
-      <div className="w-full pt-4 mt-4 border-t border-slate-700">
-         <h3 className="font-semibold text-dark-text-primary text-center sm:text-left">Interpretation</h3>
-         <p className="text-dark-text-secondary text-sm mt-1 text-center sm:text-left">{config.interpretation}</p>
+      <div className="flex justify-between w-full text-xs text-dark-text-secondary px-2">
+        <span>0</span>
+        <span>{MAX_EFFORT_LOAD}+</span>
+      </div>
+
+      <div className="w-full pt-4 mt-2 border-t border-slate-700 text-center">
+         <h3 className="font-semibold text-dark-text-primary">Interpretation</h3>
+         <p className="text-dark-text-secondary text-sm mt-1">{config.interpretation}</p>
       </div>
     </button>
   );
