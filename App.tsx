@@ -6,6 +6,7 @@ import DashboardPage from './pages/DashboardPage';
 import ProjectsPage from './pages/ProjectsPage';
 import TasksPage from './pages/TasksPage';
 import DecomposePage from './pages/DecomposePage';
+import HomePage from './pages/HomePage'; // Import the new Home Page
 import TaskDetailModal from './components/TaskDetailModal';
 import JugglingMeterDetailModal from './components/JugglingMeterDetailModal';
 import PauseSuggestionModal from './components/PauseSuggestionModal';
@@ -27,7 +28,7 @@ const initialTasks: Task[] = [
 ];
 // --- END MOCK DATA ---
 
-type Page = 'dashboard' | 'projects' | 'tasks' | 'decompose';
+type Page = 'home' | 'dashboard' | 'projects' | 'tasks' | 'decompose';
 type TemplateTask = { subtask: string; effort_score: number };
 type PauseSuggestion = { project: Project, effortReduction: number };
 
@@ -35,13 +36,15 @@ const App: React.FC = () => {
   const [projects, setProjects] = useState<Project[]>(initialProjects);
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
   
-  const [currentPage, setCurrentPage] = useState<Page>('dashboard');
+  const [currentPage, setCurrentPage] = useState<Page>('home');
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isJugglingMeterModalOpen, setIsJugglingMeterModalOpen] = useState(false);
   const [tasksForDecomposition, setTasksForDecomposition] = useState<TemplateTask[] | undefined>(undefined);
+  const [goalForDecomposition, setGoalForDecomposition] = useState<string | null>(null);
   const [pauseSuggestion, setPauseSuggestion] = useState<PauseSuggestion | null>(null);
   const [ignoreSuggestionToday, setIgnoreSuggestionToday] = useState(false);
+  const [activeTimer, setActiveTimer] = useState<{ taskId: string; startTime: number } | null>(null);
 
 
   const projectMap = useMemo(() => new Map<string, Project>(projects.map(p => [p.project_id, p])), [projects]);
@@ -133,6 +136,26 @@ const App: React.FC = () => {
       setIgnoreSuggestionToday(true);
       setPauseSuggestion(null);
   };
+  
+  const handleStartTimer = (taskId: string) => {
+    if (activeTimer) {
+      alert("Another task is already being timed. Please stop it first.");
+      return;
+    }
+    setActiveTimer({ taskId, startTime: Date.now() });
+  };
+
+  const handleStopTimer = () => {
+    if (activeTimer) {
+      const duration = Date.now() - activeTimer.startTime;
+      const seconds = Math.floor((duration / 1000) % 60);
+      const minutes = Math.floor((duration / (1000 * 60)) % 60);
+      const hours = Math.floor((duration / (1000 * 60 * 60)) % 24);
+
+      alert(`Focus session ended. Duration: ${hours}h ${minutes}m ${seconds}s`);
+      setActiveTimer(null);
+    }
+  };
 
 
   const handleSelectTask = (task: Task) => setSelectedTask(task);
@@ -145,12 +168,20 @@ const App: React.FC = () => {
     closeSidebar();
   };
   
-  const clearTasksForDecomposition = () => {
+  const handleDecomposeFromHome = (goal: string) => {
+    setGoalForDecomposition(goal);
+    handleNavigate('decompose');
+  };
+  
+  const clearDecompositionInputs = () => {
       setTasksForDecomposition(undefined);
+      setGoalForDecomposition(null);
   };
 
   const renderPage = () => {
     switch(currentPage) {
+        case 'home':
+            return <HomePage onDecomposeGoal={handleDecomposeFromHome} onNavigate={handleNavigate} />;
         case 'dashboard':
             return <DashboardPage 
                         projects={projects}
@@ -159,6 +190,7 @@ const App: React.FC = () => {
                         onToggleSidebar={toggleSidebar}
                         onOpenJugglingMeterModal={() => setIsJugglingMeterModalOpen(true)}
                         onShowPauseSuggestion={handleShowPauseSuggestion}
+                        activeTimer={activeTimer}
                    />;
         case 'projects':
             return <ProjectsPage 
@@ -167,35 +199,31 @@ const App: React.FC = () => {
                         onAddProject={handleAddProject}
                     />;
         case 'tasks':
-            return <TasksPage tasks={tasks} projects={projects} projectMap={projectMap} onSelectTask={handleSelectTask} onToggleSidebar={toggleSidebar} />;
+            return <TasksPage tasks={tasks} projects={projects} projectMap={projectMap} onSelectTask={handleSelectTask} onToggleSidebar={toggleSidebar} activeTimer={activeTimer} />;
         case 'decompose':
             return <DecomposePage 
                         projects={projects} 
                         onAddTasks={handleAddTasks} 
                         onToggleSidebar={toggleSidebar} 
                         initialTasks={tasksForDecomposition}
-                        onProcessingComplete={clearTasksForDecomposition}
+                        initialGoal={goalForDecomposition}
+                        onProcessingComplete={clearDecompositionInputs}
                     />;
         default:
-             return <DashboardPage 
-                        projects={projects}
-                        tasks={tasks}
-                        onSelectTask={handleSelectTask}
-                        onToggleSidebar={toggleSidebar}
-                        onOpenJugglingMeterModal={() => setIsJugglingMeterModalOpen(true)}
-                        onShowPauseSuggestion={handleShowPauseSuggestion}
-                   />;
+             return <HomePage onDecomposeGoal={handleDecomposeFromHome} onNavigate={handleNavigate} />;
     }
   }
 
   return (
     <div className="flex min-h-screen bg-dark-bg">
-        <Sidebar 
-            currentPage={currentPage} 
-            onNavigate={handleNavigate} 
-            isOpen={isSidebarOpen}
-            onClose={closeSidebar}
-        />
+        {currentPage !== 'home' && (
+             <Sidebar 
+                currentPage={currentPage} 
+                onNavigate={handleNavigate} 
+                isOpen={isSidebarOpen}
+                onClose={closeSidebar}
+            />
+        )}
         <main className="flex-1 min-w-0">
              {renderPage()}
         </main>
@@ -204,6 +232,9 @@ const App: React.FC = () => {
                 task={selectedTask}
                 project={projectMap.get(selectedTask.project_id)}
                 onClose={handleCloseModal}
+                activeTimer={activeTimer}
+                onStartTimer={handleStartTimer}
+                onStopTimer={handleStopTimer}
             />
         )}
         {isJugglingMeterModalOpen && (

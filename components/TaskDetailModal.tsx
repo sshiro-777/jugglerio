@@ -1,23 +1,53 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Task, Project, ProjectDna } from '../types';
 import TargetIcon from './icons/TargetIcon';
 import GoogleDocsIcon from './icons/GoogleDocsIcon';
 import GoogleCalendarIcon from './icons/GoogleCalendarIcon';
 import SparklesIcon from './icons/SparklesIcon';
 import { generateTaskDraft } from '../services/geminiService';
+import PlayIcon from './icons/PlayIcon';
+import StopIcon from './icons/StopIcon';
 
 
 interface TaskDetailModalProps {
   task: Task;
   project: Project | undefined;
   onClose: () => void;
+  activeTimer: { taskId: string; startTime: number } | null;
+  onStartTimer: (taskId: string) => void;
+  onStopTimer: () => void;
 }
 
-const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, project, onClose }) => {
+const TimerDisplay: React.FC<{ startTime: number }> = ({ startTime }) => {
+    const [elapsedTime, setElapsedTime] = useState(Date.now() - startTime);
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setElapsedTime(Date.now() - startTime);
+        }, 1000);
+        return () => clearInterval(interval);
+    }, [startTime]);
+
+    const formatTime = (ms: number) => {
+        const totalSeconds = Math.floor(ms / 1000);
+        const hours = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
+        const minutes = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
+        const seconds = String(totalSeconds % 60).padStart(2, '0');
+        return `${hours}:${minutes}:${seconds}`;
+    };
+
+    return <span className="text-2xl font-bold font-mono text-dark-text-primary">{formatTime(elapsedTime)}</span>;
+};
+
+
+const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, project, onClose, activeTimer, onStartTimer, onStopTimer }) => {
   const [isGeneratingDraft, setIsGeneratingDraft] = useState(false);
   const [draftContent, setDraftContent] = useState<string | null>(null);
   
   if (!task) return null;
+  
+  const isCurrentTaskTiming = activeTimer?.taskId === task.task_id;
+  const isAnotherTaskTiming = activeTimer && !isCurrentTaskTiming;
 
   const getDaysRemaining = (deadline: string) => {
     const diff = new Date(deadline).getTime() - new Date().getTime();
@@ -107,8 +137,33 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, project, onClos
             </div>
             <button onClick={onClose} className="text-dark-text-secondary hover:text-dark-text-primary text-2xl">&times;</button>
         </div>
+        
+        <div className="mt-8">
+            <div className="flex items-center justify-between bg-dark-bg p-4 rounded-lg">
+                <div className="flex flex-col">
+                    <span className="text-sm text-dark-text-secondary">Focus Session</span>
+                    {isCurrentTaskTiming && activeTimer ? (
+                         <TimerDisplay startTime={activeTimer.startTime} />
+                    ) : (
+                         <span className="text-2xl font-bold font-mono text-dark-text-secondary">00:00:00</span>
+                    )}
+                </div>
+                {isCurrentTaskTiming ? (
+                     <button onClick={onStopTimer} className="flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+                        <StopIcon className="w-5 h-5" />
+                        <span>Stop</span>
+                    </button>
+                ) : (
+                    <button onClick={() => onStartTimer(task.task_id)} disabled={isAnotherTaskTiming} className="flex items-center gap-2 bg-brand-primary hover:bg-opacity-80 text-dark-bg font-bold py-2 px-4 rounded-lg transition-colors disabled:bg-slate-600 disabled:cursor-not-allowed">
+                        <PlayIcon className="w-5 h-5" />
+                        <span>Start</span>
+                    </button>
+                )}
+            </div>
+             {isAnotherTaskTiming && <p className="text-xs text-amber-400 mt-2 text-center">Another task is currently being timed.</p>}
+        </div>
 
-        <div className="grid grid-cols-2 gap-6 mt-8">
+        <div className="grid grid-cols-2 gap-6 mt-6">
             <div className="text-center bg-dark-bg p-4 rounded-lg">
                 <p className="text-sm text-dark-text-secondary">Flow Rating</p>
                 <p className="text-4xl font-bold text-brand-accent">{task.flow_rating}</p>

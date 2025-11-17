@@ -12,9 +12,10 @@ interface DashboardPageProps {
   onToggleSidebar: () => void;
   onOpenJugglingMeterModal: () => void;
   onShowPauseSuggestion: () => void;
+  activeTimer: { taskId: string; startTime: number } | null;
 }
 
-const DashboardPage: React.FC<DashboardPageProps> = ({ projects, tasks, onSelectTask, onToggleSidebar, onOpenJugglingMeterModal, onShowPauseSuggestion }) => {
+const DashboardPage: React.FC<DashboardPageProps> = ({ projects, tasks, onSelectTask, onToggleSidebar, onOpenJugglingMeterModal, onShowPauseSuggestion, activeTimer }) => {
 
   const activeProjectIds = new Set(projects.filter(p => p.current_status === 'Active').map(p => p.project_id));
   const activeTasks = tasks.filter(t => activeProjectIds.has(t.project_id));
@@ -70,7 +71,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ projects, tasks, onSelect
             />
         </div>
         <div className="lg:col-span-2">
-          <CriticalFewList tasks={activeTasks} projects={projects} onSelectTask={onSelectTask} />
+          <CriticalFewList tasks={activeTasks} projects={projects} onSelectTask={onSelectTask} activeTimer={activeTimer} />
         </div>
         <div className="lg:col-span-3">
           <CognitiveLoadChart data={mockHistoricalLoad} />

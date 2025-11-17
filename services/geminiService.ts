@@ -38,18 +38,23 @@ const mockSchedule: ScheduledTask[] = [
  * AI Task Decomposition Engine (ATDE)
  * Sends a high-level task description to Gemini Pro and gets a structured list of sub-tasks.
  */
-export const decomposeTaskWithGemini = async (taskGoal: string): Promise<DecomposedTask[]> => {
+export const decomposeTaskWithGemini = async (
+    taskGoal: string,
+    imagePart?: { inlineData: { data: string, mimeType: string } }
+): Promise<DecomposedTask[]> => {
     if (!hasApiKey) {
         console.log("Using mock ATDE response.");
         return new Promise(resolve => setTimeout(() => resolve(mockDecomposedTasks), 1000));
     }
 
+    const contents = imagePart ? { parts: [{ text: taskGoal }, imagePart] } : taskGoal;
+
     try {
         const response = await ai.models.generateContent({
             model: "gemini-2.5-flash",
-            contents: `User Input (Goal): "${taskGoal}"`,
+            contents: contents,
             config: {
-                systemInstruction: `You are an expert project planner and decomposition engine. Your task is to break down a high-level user goal into a list of smaller, actionable sub-tasks. For each sub-task, you must provide an estimated "Effort Score" on a scale of 1-10, where 1 is trivial and 10 is very difficult. Respond ONLY with the JSON output.`,
+                systemInstruction: `You are an expert project planner and decomposition engine. Your task is to break down a high-level user goal into a list of smaller, actionable sub-tasks. The goal might be a direct prompt, text extracted from an uploaded document, or a prompt related to an image. For each sub-task, provide an estimated "Effort Score" on a scale of 1-10, where 1 is trivial and 10 is very difficult. Respond ONLY with the JSON output.`,
                 responseMimeType: "application/json",
                 responseSchema: {
                     type: Type.ARRAY,

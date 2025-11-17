@@ -6,6 +6,7 @@ import { generateDailySchedule } from '../services/geminiService';
 import TargetIcon from '../components/icons/TargetIcon';
 import MenuIcon from '../components/icons/MenuIcon';
 import ScheduleTimetable from '../components/ScheduleTimetable';
+import TimerIcon from '../components/icons/TimerIcon';
 
 interface TasksPageProps {
   tasks: Task[];
@@ -13,15 +14,22 @@ interface TasksPageProps {
   projectMap: Map<string, Project>;
   onSelectTask: (task: Task) => void;
   onToggleSidebar: () => void;
+  activeTimer: { taskId: string; startTime: number } | null;
 }
 
 const TaskRow: React.FC<{ 
     task: Task; 
     project: Project | undefined; 
     onSelectTask: (task: Task) => void;
-}> = ({ task, project, onSelectTask }) => {
+    isTiming: boolean;
+}> = ({ task, project, onSelectTask, isTiming }) => {
     return (
-        <div className="bg-dark-surface p-4 rounded-lg flex flex-col sm:flex-row sm:items-center gap-3 transition-all">
+        <div className={`bg-dark-surface p-4 rounded-lg flex flex-col sm:flex-row sm:items-center gap-3 transition-all ${isTiming ? 'ring-2 ring-brand-primary' : ''}`}>
+            {isTiming && (
+                <div className="flex-shrink-0" title="Timer is active for this task">
+                    <TimerIcon className="w-5 h-5 text-brand-primary animate-pulse" />
+                </div>
+            )}
             <div className="flex-grow min-w-0 w-full">
                 <p className="font-semibold text-dark-text-primary truncate" title={task.description}>{task.description}</p>
                 <div className="flex items-center gap-2 text-sm text-dark-text-secondary mt-1">
@@ -56,7 +64,7 @@ const getProjectDnaColorClasses = (dna: ProjectDna) => {
     }
 }
 
-const TasksPage: React.FC<TasksPageProps> = ({ tasks, projects, projectMap, onSelectTask, onToggleSidebar }) => {
+const TasksPage: React.FC<TasksPageProps> = ({ tasks, projects, projectMap, onSelectTask, onToggleSidebar, activeTimer }) => {
   const [schedule, setSchedule] = useState<ScheduledTask[] | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   
@@ -167,6 +175,7 @@ const TasksPage: React.FC<TasksPageProps> = ({ tasks, projects, projectMap, onSe
                                         task={task} 
                                         project={projectMap.get(task.project_id)}
                                         onSelectTask={onSelectTask}
+                                        isTiming={activeTimer?.taskId === task.task_id}
                                     />
                                 ))}
                             </div>

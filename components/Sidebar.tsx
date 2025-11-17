@@ -5,8 +5,9 @@ import ListChecksIcon from './icons/ListChecksIcon';
 import SparklesIcon from './icons/SparklesIcon';
 import XIcon from './icons/XIcon';
 import BrainCircuitIcon from './icons/BrainCircuitIcon';
+import HomeIcon from './icons/HomeIcon';
 
-type Page = 'dashboard' | 'projects' | 'tasks' | 'decompose';
+type Page = 'home' | 'dashboard' | 'projects' | 'tasks' | 'decompose';
 
 interface SidebarProps {
   currentPage: Page;
@@ -55,6 +56,12 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, onNavigate, isOpen, onCl
             </button>
         </div>
         <nav className="flex flex-col gap-2">
+          <NavItem
+            icon={<HomeIcon className="w-5 h-5" />}
+            label="Home"
+            isActive={currentPage === 'home'}
+            onClick={() => onNavigate('home')}
+          />
           <NavItem
             icon={<LayoutDashboardIcon className="w-5 h-5" />}
             label="Dashboard"
