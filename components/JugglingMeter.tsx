@@ -12,7 +12,7 @@ const MAX_EFFORT_LOAD = 40; // A baseline for "max capacity" before burnout risk
 const meterConfig = {
   GREEN: {
     label: 'In the Zone',
-    color: '#64FFDA', // brand-primary
+    color: '#38BDF8', // brand-primary
     textColor: 'text-brand-primary',
     interpretation: 'Your workload is balanced. This is a great time for deep, focused work.',
   },

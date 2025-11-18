@@ -59,6 +59,15 @@ const ScheduleTimetable: React.FC<ScheduleTimetableProps> = ({ tasks, schedule, 
         return `https://calendar.google.com/render?action=TEMPLATE&text=${title}&details=${details}&dates=${dates}`;
     };
 
+    // Fix: Refactor task mapping to use a type guard, ensuring the 'task' variable is correctly typed.
+    // This resolves issues where the TypeScript compiler fails to infer the type of `task` within the map callback.
+    const scheduledItems = schedule
+        .map(scheduleInfo => ({
+            scheduleInfo,
+            task: taskMap.get(scheduleInfo.task_id),
+        }))
+        .filter((item): item is { scheduleInfo: ScheduledTask; task: Task } => Boolean(item.task));
+
     return (
         <div className="bg-dark-surface rounded-lg p-4 h-full overflow-y-auto">
             <div className="relative">
@@ -73,10 +82,7 @@ const ScheduleTimetable: React.FC<ScheduleTimetableProps> = ({ tasks, schedule, 
                 ))}
 
                 {/* Scheduled tasks */}
-                {schedule.map(scheduleInfo => {
-                    const task = taskMap.get(scheduleInfo.task_id);
-                    if (!task) return null;
-
+                {scheduledItems.map(({ scheduleInfo, task }) => {
                     const project = projectMap.get(task.project_id);
                     const top = (timeToMinutes(scheduleInfo.start_time) - (START_HOUR * 60)) * PIXELS_PER_MINUTE;
                     const height = scheduleInfo.duration_minutes * PIXELS_PER_MINUTE;
