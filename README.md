@@ -12,6 +12,7 @@ The Juggling Meter is the signature visual feature, displaying Cognitive Load in
 
 Further innovative tools include the Cognitive Creation Suite, which integrates document search (Project Brain) with Genius Draft (AI writing) to accelerate documentation using factually sourced content. Context-Aware Scheduling blocks tasks based on energy profiles, ensuring Deep Work is protected and Recovery Blocks are scheduled post-Hackathon. jugglerio transforms project chaos into a streamlined, strategic workflow. 
 
+Application demo: https://juggler-io-631496734018.us-west1.run.app 
 ## Run Locally
 
 **Prerequisites:**  Node.js
